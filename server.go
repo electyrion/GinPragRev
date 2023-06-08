@@ -7,8 +7,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"fmt"
-	"regexp"
 
 	"github.com/gin-gonic/gin"
 	gindump "github.com/tpkeeper/gin-dump"
@@ -16,7 +14,10 @@ import (
 
 var (
 	videoService service.VideoService = service.New()
+	loginService service.LoginService = service.NewLoginService()
+	jwtService service.JWTService = service.NewJWTService()
 	videoController controller.VideoController = controller.New(videoService)
+	loginController controller.LoginController = controller.NewLoginController(loginService, jwtService)
 )
 
 func setupLogOutput() {
@@ -24,31 +25,7 @@ func setupLogOutput() {
 	gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
 }
 
-func extractVideoID(url string) (string, error) {
-	regexPattern := `v=([^&]+)`
-
-	regex := regexp.MustCompile(regexPattern)
-	matches := regex.FindStringSubmatch(url)
-
-	if len(matches) >= 2 {
-		videoID := matches[1]
-		return videoID, nil
-	}
-
-	return "", fmt.Errorf("video ID not found in URL")
-}
-
 func main() {
-
-	url := "https://www.youtube.com/watch?v=sDJLQMZzzM4&list=PL3eAkoh7fypr8zrkiygiY1e9osoqjoV9w&index=4"
-
-	videoID, err := extractVideoID(url)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-
-	fmt.Println("Video ID:", videoID)
 
 	setupLogOutput()
 
@@ -57,16 +34,22 @@ func main() {
 	server.Static("/css", "./templates/css")
 	server.LoadHTMLGlob("templates/*.html")
 
-	server.Use(gin.Recovery(), middlewares.Logger(), 
-		middlewares.BasicAuth(), gindump.Dump())
+	server.Use(gin.Recovery(), middlewares.Logger(), gindump.Dump())
 
-	server.GET("/test", func(ctx *gin.Context) {
-		ctx.JSON(200, gin.H{
-			"message": "Hello World!",
-		})
+	// Login Endpoint: Authentication + Token creation
+	server.POST("/login", func(ctx *gin.Context) {
+		token := loginController.Login(ctx)
+		if token != "" {
+			ctx.JSON(http.StatusOK, gin.H{
+				"token": token,
+			})
+		} else {
+			ctx.JSON(http.StatusUnauthorized, nil)
+		}
 	})
 
-	apiRoutes := server.Group("/api")
+	// JWT Authorization Middleware applies to "/api" only
+	apiRoutes := server.Group("/api", middlewares.AuthorizeJWT())
 	{
 		apiRoutes.GET("/videos", func(ctx *gin.Context) {
 			ctx.JSON(200, videoController.FindAll())
@@ -83,8 +66,9 @@ func main() {
 		})
 	}
 
+	// the "/view" endpoints are public (no Authorization requirec)
 	viewRoutes := server.Group("/view")
-	{
+{
 		viewRoutes.GET("/videos", videoController.ShowAll)
 	}
 	server.Run(":8080")
