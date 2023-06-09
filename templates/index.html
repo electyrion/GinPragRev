@@ -1,27 +1,20 @@
 {{ template "header.html" }}
 
-<div class="album py-4 bg-light">
-    <div class="container">
-        <div class="row">
-            <!-- loop over the list of videos -->
-            {{range .videos}}
-                <div class="col-md-4">
-                    <div class="card mb-4 shadow-sm">
-                        <div class="card-body">
-                            <iframe width="300" height="200"
-                                src="https://www.youtube.com/embed/{{.URLid}}"
-                                frameborder="0" allow="accelerometer; autoplay;
-                                encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                            <p class="card-text">
-                                <h4>{{ .Title }}</h4>
-                                <p>{{.Description}}</p>
-                            </p>
-                        </div>
+    <div class="bg-gray-100">
+        <div class="container mx-auto py-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+                <!-- loop over the list of videos -->
+                {{range .videos}}
+                <div class="max-w-sm rounded overflow-hidden shadow-lg">
+                    <iframe class="w-full" width="300" height="200" src="https://www.youtube.com/embed/{{.URLid}}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    <div class="px-6 py-4">
+                        <div class="font-bold text-xl mb-2">{{ .Title }}</div>
+                        <p class="text-gray-700 text-base">{{.Description}}</p>
                     </div>
                 </div>
-            {{end}}
+                {{end}}
+            </div>
         </div>
     </div>
-</div>
 
 {{ template "footer.html" }}

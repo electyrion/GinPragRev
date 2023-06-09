@@ -1,8 +1,6 @@
 package entity
 
 import (
-	"fmt"
-	"regexp"
 	"time"
 )
 
@@ -24,31 +22,4 @@ type Video struct {
 	PersonID 	uint64 `json:-`
 	CreatedAt	time.Time `json:"-" gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt	time.Time `json:"-" gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-}
-
-func NewVideo(url string) (*Video, error) {
-	urlID, err := extractVideoID(url)
-	if err != nil {
-		return nil, err
-	}
-
-	video := &Video{
-		URL:     url,
-		URLid: urlID,
-	}
-	return video, nil
-}
-
-func extractVideoID(url string) (string, error) {
-	regexPattern := `v=([^&]+)`
-
-	regex := regexp.MustCompile(regexPattern)
-	matches := regex.FindStringSubmatch(url)
-
-	if len(matches) >= 2 {
-		videoID := matches[1]
-		return videoID, nil
-	}
-
-	return "", fmt.Errorf("video ID not found in URL")
 }

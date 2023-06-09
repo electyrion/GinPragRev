@@ -93,8 +93,8 @@ func main() {
 	}
 
 	// the "/view" endpoints are public (no Authorization requirec)
-	viewRoutes := server.Group("/view")
-{
+	viewRoutes := server.Group("/view") 
+	{
 		viewRoutes.GET("/videos", videoController.ShowAll)
 	}
 	server.Run(":8080")
