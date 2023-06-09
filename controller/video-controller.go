@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"fmt"
 	"golang-gin-poc/entity"
 	"golang-gin-poc/service"
 	"golang-gin-poc/validators"
 	"net/http"
+	"regexp"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -37,8 +39,6 @@ func (c *controller) FindAll() []entity.Video {
 	return 	c.service.FindAll()
 }
 
-
-// TODO: handle VideoID
 func (c *controller) Save(ctx *gin.Context) error {
 	var video entity.Video
 	
@@ -52,8 +52,29 @@ func (c *controller) Save(ctx *gin.Context) error {
 		return err
 	}
 
+	url := video.URL
+	urlID, err := extractURLid(url)
+	if err != nil {
+		return err
+	}
+	video.URLid = urlID
+
 	c.service.Save(video)
 	return nil
+}
+
+func extractURLid(url string) (string, error) {
+	regexPattern := `v=([^&]+)`
+
+	regex := regexp.MustCompile(regexPattern)
+	matches := regex.FindStringSubmatch(url)
+
+	if len(matches) >= 2 {
+		videoID := matches[1]
+		return videoID, nil
+	}
+
+	return "", fmt.Errorf("video ID not found in URL")
 }
 
 func (c *controller) Update(ctx *gin.Context) error {
